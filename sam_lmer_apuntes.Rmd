@@ -189,4 +189,72 @@ W = 0.9783, p-value = 0.08548
 por los pelos, si sale significativo tengo un problema. porque los residuos no estan bien
 
 
+kk<- rnorm(n=dim(modelo@frame[1]),mean = mean(residuals(modelo)), sd = sd(residuals(modelo)))
+
+> kk<- rnorm(n=dim(modelo@frame)[1], mean= mean(residuals(modelo)), sd = sd(residuals(modelo)))
+> shapiro.test(kk)
+
+	Shapiro-Wilk normality test
+
+data:  kk
+W = 0.99041, p-value = 0.672
+
+> kk<- rnorm(n=dim(modelo@frame)[1], mean= mean(residuals(modelo)), sd = sd(residuals(modelo)))
+> shapiro.test(kk)
+
+	Shapiro-Wilk normality test
+
+data:  kk
+W = 0.98903, p-value = 0.5589
+
+> kk<- rnorm(n=dim(modelo@frame)[1], mean= mean(residuals(modelo)), sd = sd(residuals(modelo)))
+> shapiro.test(kk)
+
+	Shapiro-Wilk normality test
+
+data:  kk
+W = 0.98858, p-value = 0.5234
+
+> kk<- rnorm(n=dim(modelo@frame)[1], mean= mean(residuals(modelo)), sd = sd(residuals(modelo)))
+> shapiro.test(kk)
+
+	Shapiro-Wilk normality test
+
+data:  kk
+W = 0.99109, p-value = 0.7292
+
+> kk<- rnorm(n=dim(modelo@frame)[1], mean= mean(residuals(modelo)), sd = sd(residuals(modelo)))
+> shapiro.test(kk)
+
+	Shapiro-Wilk normality test
+
+data:  kk
+W = 0.98499, p-value = 0.2914
+
+> kk<- rnorm(n=dim(modelo@frame)[1], mean= mean(residuals(modelo)), sd = sd(residuals(modelo)))
+> shapiro.test(kk)
+
+	Shapiro-Wilk normality test
+
+data:  kk
+W = 0.98982, p-value = 0.6226
+
+> kk<- rnorm(n=dim(modelo@frame)[1], mean= mean(residuals(modelo)), sd = sd(residuals(modelo)))
+> shapiro.test(kk)
+
+	Shapiro-Wilk normality test
+
+data:  kk
+W = 0.96991, p-value = 0.01806
+
+Los residuos de DHARMa se calculan entre 1 y 0. Un Rs en el valor 0.9.. es extremo lo ideal es que esten en el percentil 50 tanto mas vayas a un dalo u otro es peor.
+
+plot(fitted(modelo), modelo@frame[,1]); abline(a=0, b=1, col="red", lwd=2)
+predict.lmer <- predictInterval(modelo, newdata=datos, level=0.999)
+predicciones <- data.frame(modelo@frame[1], predict.lmer[3], predict.lmer[2], predict.lmer[1])
+predicciones$residuos <- predicciones[1] - predicciones[4]
+predicciones$residsDHARMA <- residuos.mixto$scaledResiduals
+predicciones
+
+da una tabla que primero predice los valores de un modelo con el intervalo d confianza de las predicciones en cada dato al 99,99% me da los fitted y su intervalo de confianza, despues extraigo la primera columna del model frame que es la respuesta y reordeno lo que me da (predict interval) y reordeno los resultados y le añado una columna que es predict lmer y luego calculo los residuos. la tabla a por b son los RS. Si el valor predicho se acerca mucho al observado entrara en el el centro de la campana en el percentil 50 y es lo feten.  Si esta el observado en la cola. Eso es lo que hace DHARMa, si el valor predicho se acerca al observado entraria en percentiles 50 si se pasa estaria en al cola de la derecha y tendria que entrar en el percentil final. DHARMa es lo que hace. 
  
