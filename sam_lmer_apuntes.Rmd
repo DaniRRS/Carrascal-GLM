@@ -78,3 +78,30 @@ la marginal tiene 0
 la condicional mete todo fijo + aleatorios
 
 Indica que es poco repetible porque esto se la repetibilidad
+
+RIFS
+
+lmer.1 <- lmer(a_por_b ~ t_sonda+fuente*especie + (1|id), data=datos, control=control.lmer, REML=TRUE)
+
+realmente tengo 26 interceptos , y trabajare con mis 104 observaciones pero no como si tuviera 104 interceptos si no 26
+
+> lmer.2 <- lmer(a_por_b ~ t_sonda+fuente*especie + (1+t_sonda+fuente|id), data=datos, control=control.lmer, REML=TRUE)
+boundary (singular) fit: see help('isSingular')
+
+Puede que algo sobre...con lme esto no ocurre.
+
+> lmer.2 <- lmer(a_por_b ~ t_sonda+fuente*especie + (1+t_sonda+fuente*especie|id), data=datos, control=control.lmer, REML=TRUE)
+Error: number of observations (=104) <= number of random effects (=702) for term (1 + t_sonda + fuente * especie | id); the random-effects parameters and the residual variance (or scale parameter) are probably unidentifiable
+
+me dice que no hay datos para algunas combinaciones lo vimos con especie e id al haber 0
+
+> lmer.4 <- lmer(a_por_b ~ t_sonda+fuente*especie + (1|id)+(t_sonda-1|id)+(fuente-1|id), data=datos, control=control.lmer, REML=TRUE)
+boundary (singular) fit: see help('isSingular')
+Aviso:
+Model failed to converge with 1 negative eigenvalue: -6.8e-03
+
+Estamos incumpliendo el supuesto de varianza y covarianza positiva, es contigente.
+
+lmer.5 <- lmer(a_por_b ~ t_sonda+fuente*especie + (t_sonda+fuente-1|id), data=datos, control=control.lmer, REML=TRUE)
+
+le he quitado el intercept, no hago un intercepto por cada uno de los 26 invidividuos aqui me quedo la media de los geotrupidos representados en 13 especies. He fijado el intercepto, tengo un intercepto global y distintas pendientes. Las rectas para la t_sonda parte de la media de a*b para todos los individuos
