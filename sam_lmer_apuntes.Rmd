@@ -59,14 +59,22 @@ options(contrasts=c(factor="contr.sum", ordered="contr.poly"))
 
 ```
 
+Esto modelos realizan una busqueda de la solución de forma asintótica e iterativa. Hay dos líneas de control para controlar estos procesos. 118, 119.
 
+lmer.0 <- lmer(a_por_b ~ 1 + (1|id), data=datos, control=control.lmer, REML=TRUE)
 
-## Including Plots
+¿Hemos metido algun termino fijo? no solo el intercepto
+¿hemos metido algun aleatorio? si el id
 
-You can also embed plots, for example:
+En este modelo si hago table(datos$id,table$especie) veo 0 no puedo random slopes para especie
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+table(datos$fuente,datos$especie) podríamos anidar fuente y especie o ver cruzamiento. No hay 0
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+> r.squaredGLMM(lmer.0)
+     R2m       R2c
+[1,]   0 0.1978784
+
+la marginal tiene 0 
+la condicional mete todo fijo + aleatorios
+
+Indica que es poco repetible porque esto se la repetibilidad
