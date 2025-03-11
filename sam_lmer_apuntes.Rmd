@@ -105,3 +105,88 @@ Estamos incumpliendo el supuesto de varianza y covarianza positiva, es contigent
 lmer.5 <- lmer(a_por_b ~ t_sonda+fuente*especie + (t_sonda+fuente-1|id), data=datos, control=control.lmer, REML=TRUE)
 
 le he quitado el intercept, no hago un intercepto por cada uno de los 26 invidividuos aqui me quedo la media de los geotrupidos representados en 13 especies. He fijado el intercepto, tengo un intercepto global y distintas pendientes. Las rectas para la t_sonda parte de la media de a*b para todos los individuos
+
+> AICc(lmer.1, lmer.2, lmer.3, lmer.4, lmer.5)
+       df     AICc
+lmer.1 29 579.6846
+lmer.2 34 598.9923
+lmer.3 34 599.7929
+lmer.4 33 595.8051
+lmer.5 34 598.9923
+
+Por teoria de la informacion, he dejado los que tienen mismos efectos fijos FF, el primero es el que no habia dado problemas, ya viendo esto el primero es el más plausible. Los valores de AICc están en escala exponencial, si difieren en más de 4 ud es que el menor es un poco mejor, si difieren en más de 7 es que es mejor, de 9 muchisimo mucho mejor.
+
+> Weights(AICc(lmer.1, lmer.2, lmer.3, lmer.4, lmer.5))
+ model weights 
+[1] 1 0 0 0 0
+
+Solo 1 es bueno, el primero
+
+cuneta la vieja pa ver como mejor es
+
+exp(-(579,6846 - 595.8051)/2) = 3166 veces mejor el modelo 1
+
+> Weights(AICc(lme.1, lme.1a, lme.1b, lme.1c, lme.2, lme.2a, lme.2b, lme.3, lme.3a, lme.3b, lme.4, lme.4a, lme.4b, lme.4c, lme.5, lme.5a, lme.5b))
+ model weights 
+ [1] 0.179 0.179 0.179 0.179 0.000 0.000 0.030 0.000 0.000 0.000 0.000 0.000 0.004 0.221 0.000 0.000 0.030
+ 
+ REML para parametrizar efectos, pero para comparar modelos se usa el ML del modelo por lo que la bondad de ANOVA y solo para comparar modelos (que se llaman modelos anidados porque uno es una reduccion de otro) 
+ 
+anova(lmer.1, lmer.2)
+anova(update(lme.1, method="ML"), update(lme.2, method="ML"))
+anova(lmer.1, lmer.4)
+anova(update(lme.1, method="ML"), update(lme.4, method="ML"))
+
+## equivalente a utilizar likelihood ratio tests (usando estimas ML y no-REML)
+lrtest(update(lmer.1, REML=F), update(lmer.2, REML=F))
+lrtest(update(lme.1, method="ML"), update(lme.2, method="ML"))
+
+Esto le dice vuelve a contruir el modelo lmer.1 pero ahora REML = F 
+
+
+REML NO VALE PARA COMPARAR MODELOS, TIENE QUE SER CON ML
+
+Pero lo que se usa es AICc al final.
+
+> summary(lmer.2)$varcor  ## modelo lmer
+ Groups   Name        Std.Dev. Corr         
+ id       (Intercept) 11.11480              
+          t_sonda      0.42008 -1.000       
+          fuente1      1.10104  1.000 -1.000
+ Residual              3.52846              
+
+
+Varianza - desviacion tipica al cuadrado, las varianzas las obtengo con
+
+> summary(lmer.2)$varcor  ## modelo lmer
+ Groups   Name        Std.Dev. Corr         
+ id       (Intercept) 11.11480              
+          t_sonda      0.42008 -1.000       
+          fuente1      1.10104  1.000 -1.000
+ Residual              3.52846              
+ 
+ Imagina que tengo 0.01 al cuadrado es 0.001 es poca chicha, como he metido efectos aleatorios correlacionados veo que lo están y mucho, si tengo el intercepto bajo la pendiente es alta y si lo tengo alto la pendiente es mas baja. Vemos que estan muy relacionados que sentido tiene meter un aleatorio de la sonda en los 26 individuos otro de la temperatura en los 26...
+ 
+Tenemos que intentar que los valores de Std. Dev. no sean cercanos a 0 y los numero de Corr sean lejanos de 1 y -1 (o 0.9 y -0.9)
+
+modelo@frame Solo los datoas qeu ha usado para el modelo
+
+hist(residuals(modelo), density=10, freq=FALSE, main="residuos del modelo lmer", ylim=c(0,0.3), lwd=2, col="black")
+curve(dnorm(x, mean=mean(residuals(modelo)), sd=sd(residuals(modelo))), col="red", lwd=2, add=TRUE, yaxt="n")
+#
+
+para pequeño tamño muestra qqplot
+
+qqmath(modelo, id=0.05) identifica puntos raros , ha identificado uno en el quinto coño que es un posible outlier y sale un 4 que es la fila 4
+
+> shapiro.test(residuals(modelo))   ##   modelo lmer
+
+	Shapiro-Wilk normality test
+
+data:  residuals(modelo)
+W = 0.9783, p-value = 0.08548
+
+por los pelos, si sale significativo tengo un problema. porque los residuos no estan bien
+
+
+ 
