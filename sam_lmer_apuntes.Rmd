@@ -1,0 +1,50 @@
+---
+title: "Sam_lmer_apuntes"
+author: "DaniRRS"
+date: "2025-03-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## SAM LMER
+
+2 individuos por especie
+
+13 especies
+
+tengo un factor random con 26 niveles
+
+Cada individuo se midio ocn dos circunstancias:
+
+- SAM RADIATION
+- en IR sin componente luminica
+
+Se quiere medir a que tasa se calienta cada escarabajo
+
+El ensayo se hace dos veces con cada individuo en IR y SAM.
+
+26*4 = 104
+
+Tendré 104 filas. 
+
+Tengo individuo 1 y 2 de cada especie y los numero 1 2 3 4 no 1 2 1 2 porque el 1 de una especie no es igual que el 1 de otra. 
+
+
+
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
