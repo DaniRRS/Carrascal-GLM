@@ -32,12 +32,34 @@ Tendré 104 filas.
 
 Tengo individuo 1 y 2 de cada especie y los numero 1 2 3 4 no 1 2 1 2 porque el 1 de una especie no es igual que el 1 de otra. 
 
+Generamos distintos modelos con la mista parte fija:
+
+temp ~ t_sonda + fuente*spp 
+
+y diferentes aleatorias
+
+(1|id)
 
 
+Siempre que trabajemos con diseños factoriales, es más, cuando interaccionan entre sí deberíamos utilizar lo que se denominan contrastes ortogonales. Hay dos modos de convertir los factores con niveles a numeros.
 
-```{r cars}
-summary(cars)
+Un factor por ejemplo con 13 niveles lo puedo convertir en columnas tantas como tiene el factor con unos y 0 es una dumi. R compara cada nivel del factor con un baseline, ese será 1 y esl resto compara. R usa contr.treatment y cuando usas factores que interaccionan esto no sirve y no es correcto. 
+
+
+```{r}
+contr.sum()
+contr.treatment() #usa r y es erronea
 ```
+
+
+Para diseños con factores con interacciones hay que 
+
+```{r}
+options(contrasts=c(factor="contr.sum", ordered="contr.poly"))
+
+```
+
+
 
 ## Including Plots
 
