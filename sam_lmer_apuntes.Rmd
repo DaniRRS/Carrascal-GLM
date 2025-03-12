@@ -1281,3 +1281,32 @@ fuente in (1 + t_sonda + fuente | id)    31 -248.73 559.47 0.96806  3     0.8090
 
 ningun efecto aleatorio significativo. El random aqui esta controlando por random intercept and random slopes, esto isignifica que no hay diferencia en las regresiones de las pendientes en los 26 individuos y no difieren entre si y se puede generalizar una pemndiente para los 26 y con la fuente igual todos los individuos tienen la misma tasa de cambio . Por lo tanto para que complicarlo si no hay ese efecto.
 
+
+> r.squaredGLMM(modelo)   ## modelo lmer
+           R2m       R2c
+[1,] 0.4747659 0.5931434
+
+r2c es lo que explica aleatorio y fijo
+r2m es lo que explica la parte fija y retiene el 47%
+
+> r.squaredGLMM(lmer.0)   ## modelo lmer
+     R2m       R2c
+[1,]   0 0.1978784
+> 0.5931434 - 0.4747659
+[1] 0.1183775
+
+Aqui vemos la parte exclusiva de la aleatoria que es 11% por la concomitancia parte 
+
+
+> eta_squared(anova(modelo, ddf="Satterthwaite", type=3))
+# Effect Size for ANOVA (Type III)
+
+Parameter      | Eta2 (partial) |       95% CI
+----------------------------------------------
+t_sonda        |           0.33 | [0.20, 1.00]
+fuente         |           0.42 | [0.28, 1.00]
+especie        |           0.68 | [0.00, 1.00]
+fuente:especie |           0.10 | [0.00, 1.00]
+
+Lo que explica y no, la magnitud del efecto de la interaccion es muy pequeña 0,10 , la magnitud de la especie es alta 0,68, la menor es t_sonda. Las diferencais entre especies en alcanzar la temp es alta. 
+
