@@ -601,7 +601,6 @@ modtmb.nulo.ML <- update(modtmb.ML, .~1+(1|id), REML=FALSE)  ## *** ojo !!  pone
 lrtest(modelo.nulo.ML, modelo.ML)
 lrtest(modlme.nulo.ML, modlme.ML)
 lrtest(modtmb.nulo.ML, modtmb.ML)
-
 ## Realizamos la comparacion entre el modelo de interes y el que carece de efectos fijos utilizando Akaike AICc
 AICc(modelo.nulo.ML, modelo.ML)
 AICc(modlme.nulo.ML, modlme.ML)
