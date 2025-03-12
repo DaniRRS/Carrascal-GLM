@@ -1343,3 +1343,20 @@ fuente:especie        0.0357  98.85   8.238    12 64.22  0.6164 8.206e-01
 
 
 La sonda explica el 17%, la fuente el 24, la especie el 13 y la interaccion un 4. Esto se parece a los omega. el -0.1145 es por al concomitancia por que la sonda la fuente y la temp comen juntas y el vif al no ser 1 dificulta el discernimiento de que explica cada una
+
+
+plot(allEffects(modelo), rotx=45, rug=F)    ## intervalos de confianza del 95%
+
+
+efectos marginales cada uno controlado por el otro. Si dentro de las rayas azules puedo meter una linea horizontal no es significativo porque la hipotesis nula de ausencia de relaciones me da pendiente 0. Cualquier linea en ese plano azul seria posible pero no incluye el 0 que es la hipotesis nula. a la derecha si todos hubiesen tenido la misma temperatura ambiental (tsonda) se calienta mas asterc en luz que en infra, tambien vemos que la tasa de cambio entre especies en las distintas fuente no cambia todas caen de una a otra 
+
+
+plot(Effect("especie", partial.residuals=F, modelo), lwd=3, lty=1, rotx=45,
+     partial.residuals=list(col="blue", pch=1, cex=1.25), rug=F)
+     
+cual es la diferencia entre especies cuando el resto todo igual
+
+plot(Effect("fuente", partial.residuals=F, modelo), lwd=3, lty=1, rotx=45,
+     partial.residuals=list(col="blue", pch=1, cex=1.25), rug=F)
+
+solo por fuente controlado por especie, t sonda etc
