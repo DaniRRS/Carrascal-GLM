@@ -1308,5 +1308,38 @@ fuente         |           0.42 | [0.28, 1.00]
 especie        |           0.68 | [0.00, 1.00]
 fuente:especie |           0.10 | [0.00, 1.00]
 
-Lo que explica y no, la magnitud del efecto de la interaccion es muy pequeña 0,10 , la magnitud de la especie es alta 0,68, la menor es t_sonda. Las diferencais entre especies en alcanzar la temp es alta. 
+Lo que explica y no, la magnitud del efecto de la interaccion es muy pequeña 0,10 , la magnitud de la especie es alta 0,68, la menor es t_sonda. Las diferencais entre especies en alcanzar la temp es alta. Estos valores son medidas de magnitud comparada no de cuanto explican poruqe suman mas del 100
 
+Omega y epsilon penalizan mas por los grados de libertad que consumen, por eso puntua peor especie.
+
+SStotal <- sum((modelo@frame[,1]-mean(modelo@frame[,1]))^2)      
+SSerror <- SStotal*(1-as.numeric(r.squaredGLMM(modelo)[2]))
+tabla.SS <- as.data.frame(anova(modelo, ddf="Kenward-Roger", type=3))
+prop_varianza <- tabla.SS[,1]/SStotal
+tabla.SS <- data.frame(prop_varianza, tabla.SS)
+names(tabla.SS)[7] <- "Pr.F"
+print(tabla.SS, digits=4)
+var.compartida <- (as.numeric(r.squaredGLMM(modelo)[1])-sum(tabla.SS$prop_varianza))
+print(c("proporcion de la varianza atribuible a los efectos fijos =", round(as.numeric(r.squaredGLMM(modelo)[1]), 4)), quote=FALSE)
+print(c("proporcion de la varianza compartida por los efectos fijos =", round(var.compartida, 4)), quote=FALSE)
+
+CAlculamos el sumssquarer que es la variabilida dde la tarta y miro las direncias dde sus medias al cuadrado vamos que veo la variabilidadde la respuesta , SSerror es lo que no explica el modelo ni los fijos ni random ni nada.
+
+
+
+
+               prop_varianza Sum.Sq Mean.Sq NumDF DenDF F.value      Pr.F
+t_sonda               0.1768 489.59 489.594     1 76.01 36.6317 5.021e-08
+fuente                0.2442 676.27 676.273     1 72.94 50.5991 6.444e-10
+especie               0.1326 367.24  30.603    12 12.82  2.2898 7.741e-02
+fuente:especie        0.0357  98.85   8.238    12 64.22  0.6164 8.206e-01
+> var.compartida <- (as.numeric(r.squaredGLMM(modelo)[1])-sum(tabla.SS$prop_varianza))
+> print(c("proporcion de la varianza atribuible a los efectos fijos =", round(as.numeric(r.squaredGLMM(modelo)[1]), 4)), quote=FALSE)
+[1] proporcion de la varianza atribuible a los efectos fijos =
+[2] 0.4748                                                    
+> print(c("proporcion de la varianza compartida por los efectos fijos =", round(var.compartida, 4)), quote=FALSE)
+[1] proporcion de la varianza compartida por los efectos fijos =
+[2] -0.1145                             
+
+
+La sonda explica el 17%, la fuente el 24, la especie el 13 y la interaccion un 4. Esto se parece a los omega. el -0.1145 es por al concomitancia por que la sonda la fuente y la temp comen juntas y el vif al no ser 1 dificulta el discernimiento de que explica cada una
