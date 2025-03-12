@@ -257,4 +257,570 @@ predicciones$residsDHARMA <- residuos.mixto$scaledResiduals
 predicciones
 
 da una tabla que primero predice los valores de un modelo con el intervalo d confianza de las predicciones en cada dato al 99,99% me da los fitted y su intervalo de confianza, despues extraigo la primera columna del model frame que es la respuesta y reordeno lo que me da (predict interval) y reordeno los resultados y le añado una columna que es predict lmer y luego calculo los residuos. la tabla a por b son los RS. Si el valor predicho se acerca mucho al observado entrara en el el centro de la campana en el percentil 50 y es lo feten.  Si esta el observado en la cola. Eso es lo que hace DHARMa, si el valor predicho se acerca al observado entraria en percentiles 50 si se pasa estaria en al cola de la derecha y tendria que entrar en el percentil final. DHARMa es lo que hace. 
+
+
+
+R version 4.4.2 (2024-10-31 ucrt) -- "Pile of Leaves"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64
+
+R es un software libre y viene sin GARANTIA ALGUNA.
+Usted puede redistribuirlo bajo ciertas circunstancias.
+Escriba 'license()' o 'licence()' para detalles de distribucion.
+
+R es un proyecto colaborativo con muchos contribuyentes.
+Escriba 'contributors()' para obtener más información y
+'citation()' para saber cómo citar R o paquetes de R en publicaciones.
+
+Escriba 'demo()' para demostraciones, 'help()' para el sistema on-line de ayuda,
+o 'help.start()' para abrir el sistema de ayuda HTML con su navegador.
+Escriba 'q()' para salir de R.
+
+[Workspace loaded from ~/DC/Cursos/GLM/Carrascal-GLM/.RData]
+
+Cargando paquete requerido: lmerTest
+Cargando paquete requerido: lme4
+Cargando paquete requerido: Matrix
+
+Adjuntando el paquete: ‘lmerTest’
+
+The following object is masked from ‘package:lme4’:
+
+    lmer
+
+The following object is masked from ‘package:stats’:
+
+    step
+
+> library(lmtest)      ## para lrtest
+Cargando paquete requerido: zoo
+
+Adjuntando el paquete: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+Avisos:
+1: package ‘lmerTest’ was built under R version 4.4.3 
+2: package ‘lme4’ was built under R version 4.4.3 
+3: package ‘lmtest’ was built under R version 4.4.3 
+> library(LMERConvenienceFunctions)
+Aviso:
+package ‘LMERConvenienceFunctions’ was built under R version 4.4.3 
+> library(MuMIn)       ## para AICc
+Aviso:
+package ‘MuMIn’ was built under R version 4.4.3 
+> library(car)         ## para Anova(modelo, type=3) para equivalente a suma de tipo III; para boxCox(modelo, lambda=seq(-2,2, 1/100))
+Cargando paquete requerido: carData
+Aviso:
+package ‘car’ was built under R version 4.4.3 
+> library(nlme)        ## modelos generales lineales lme
+
+Adjuntando el paquete: ‘nlme’
+
+The following object is masked from ‘package:lme4’:
+
+    lmList
+
+Aviso:
+package ‘nlme’ was built under R version 4.4.3 
+> library(pbkrtest)    ## necesario para lmerTest
+Registered S3 method overwritten by 'broom':
+  method        from 
+  nobs.multinom MuMIn
+Aviso:
+package ‘pbkrtest’ was built under R version 4.4.3 
+> library(lmerTest)    ## para MS, df, p ... usando type 3/type 1 hypotheses with "Satterthwaite" and "Kenward-Roger"
+> library(moments)     ## para obtener el sesgo, kurtosis y sus significaciones: kurtosis, anscombe.test, skewness, agostino.test
+> library(DHARMa)      ## para diagnosis de modelos
+This is DHARMa 0.4.7. For overview type '?DHARMa'. For recent changes, type news(package = 'DHARMa')
+Aviso:
+package ‘DHARMa’ was built under R version 4.4.3 
+> library(glmmTMB)     ## generalized mixed models (glmm) con TMB
+Aviso:
+package ‘glmmTMB’ was built under R version 4.4.3 
+> library(merTools)    ## para residuos de DHARMa
+Cargando paquete requerido: arm
+Cargando paquete requerido: MASS
+
+arm (Version 1.14-4, built: 2024-4-1)
+
+Working directory is C:/Users/PTIC-DB-1/Documents/DC/Cursos/GLM/Carrascal-GLM
+
+
+Adjuntando el paquete: ‘arm’
+
+The following object is masked from ‘package:car’:
+
+    logit
+
+The following object is masked from ‘package:MuMIn’:
+
+    coefplot
+
+Avisos:
+1: package ‘merTools’ was built under R version 4.4.3 
+2: package ‘arm’ was built under R version 4.4.3 
+3: package ‘MASS’ was built under R version 4.4.3 
+> #### CARGAMOS PAQUETES DE ANALISIS ####
+> library(lme4)        ## modelos generales lmer
+> library(lattice)     ## para plots de residuos
+Aviso:
+package ‘lattice’ was built under R version 4.4.3 
+> library(psych)       ## para estadisticas resumen de tablas
+
+Adjuntando el paquete: ‘psych’
+
+The following object is masked from ‘package:merTools’:
+
+    ICC
+
+The following objects are masked from ‘package:arm’:
+
+    logit, rescale, sim
+
+The following object is masked from ‘package:car’:
+
+    logit
+
+Aviso:
+package ‘psych’ was built under R version 4.4.3 
+> library(performance) ## para pruebas de los modelos
+
+Adjuntando el paquete: ‘performance’
+
+The following object is masked from ‘package:arm’:
+
+    display
+
+Aviso:
+package ‘performance’ was built under R version 4.4.3 
+> library(sjPlot)      ## para efectos parciales
+Install package "strengejacke" from GitHub (`devtools::install_github("strengejacke/strengejacke")`) to load all sj-packages at once!
+Aviso:
+package ‘sjPlot’ was built under R version 4.4.3 
+> library(corrplot)    ## para graficos de correlaciones
+corrplot 0.95 loaded
+
+Adjuntando el paquete: ‘corrplot’
+
+The following object is masked from ‘package:arm’:
+
+    corrplot
+
+Aviso:
+package ‘corrplot’ was built under R version 4.4.3 
+> library(parameters)  ## para salidas de tablas de coeficientes
+
+Adjuntando el paquete: ‘parameters’
+
+The following object is masked from ‘package:arm’:
+
+    display
+
+The following objects are masked from ‘package:moments’:
+
+    kurtosis, skewness
+
+Aviso:
+package ‘parameters’ was built under R version 4.4.3 
+> library(effectsize)  ## para effectos parciales
+
+Adjuntando el paquete: ‘effectsize’
+
+The following object is masked from ‘package:psych’:
+
+    phi
+
+The following objects are masked from ‘package:arm’:
+
+    display, standardize
+
+Aviso:
+package ‘effectsize’ was built under R version 4.4.3 
+> library(effects)     ## para visualizacion de efectos parciales
+Use the command
+    lattice::trellis.par.set(effectsTheme())
+  to customize lattice options for effects plots.
+See ?effectsTheme for details.
+Aviso:
+package ‘effects’ was built under R version 4.4.3 
+> ##
+> ## PREDICCIONES DEL MODELO lmer y EXPLICACION de los residuos de DHARMA
+> plot(fitted(modelo), modelo@frame[,1]); abline(a=0, b=1, col="red", lwd=2)
+> predict.lmer <- predictInterval(modelo, newdata=datos, level=0.999)
+> predicciones <- data.frame(modelo@frame[1], predict.lmer[3], predict.lmer[2], predict.lmer[1])
+> predicciones$residuos <- predicciones[1] - predicciones[4]
+> predicciones$residsDHARMA <- residuos.mixto$scaledResiduals
+> predicciones
+    a_por_b      lwr      upr      fit     a_por_b residsDHARMA
+1    46.106 29.68130 57.29024 44.14028  1.96572448        0.564
+2    52.994 37.50092 66.82394 53.72458 -0.73058253        0.336
+3    46.869 34.00987 63.33827 48.16793 -1.29892634        0.212
+4    41.472 29.76044 56.38021 42.14542 -0.67342171        0.344
+5    50.387 37.06366 64.71822 49.08361  1.30339425        0.604
+6    45.077 33.23273 62.62457 46.99754 -1.92054103        0.356
+7    52.136 32.73807 62.63136 47.34672  4.78927682        0.896
+8    45.497 32.04402 61.76252 47.08126 -1.58426205        0.340
+9    48.748 29.96169 58.25954 45.75486  2.99313887        0.712
+10   49.283 36.37337 64.18677 49.30623 -0.02323129        0.348
+11   45.198 36.22691 62.96575 49.28413 -4.08612898        0.076
+12   43.521 30.65800 59.31064 45.01961 -1.49860991        0.260
+13   52.929 36.87755 69.95204 52.29140  0.63760459        0.700
+14   47.991 37.63001 65.39747 50.66510 -2.67409694        0.316
+15   61.589 33.57141 65.44067 49.99201 11.59698533        0.996
+16   45.365 34.49806 63.46847 50.24660 -4.88160431        0.152
+17   43.582 26.89071 55.81361 41.84602  1.73597599        0.556
+18   42.086 29.28302 59.29333 44.53279 -2.44678787        0.196
+19   40.943 29.20097 60.18157 45.50078 -4.55777764        0.100
+20   43.967 30.26834 56.74689 42.87484  1.09215549        0.500
+21   50.756 30.92244 63.19047 47.76418  2.99182299        0.844
+22   42.974 31.44256 58.37453 45.65285 -2.67885165        0.284
+23   52.054 30.42650 60.59890 46.77759  5.27640523        0.964
+24   42.123 31.27658 58.79901 44.40731 -2.28431387        0.368
+25   47.993 39.01972 66.65102 53.40039 -5.40738712        0.024
+26   43.208 29.98486 60.01814 45.06413 -1.85612739        0.156
+27   44.750 32.71746 61.97456 46.75488 -2.00488495        0.156
+28   44.930 29.13271 59.85115 45.15840 -0.22839581        0.300
+29   55.595 35.30690 65.92482 50.62123  4.97376857        0.952
+30   50.671 34.70697 63.30179 48.97483  1.69616983        0.848
+31   56.611 35.89088 65.55552 50.54288  6.06812445        0.984
+32   44.362 33.06710 62.43167 49.12855 -4.76654989        0.312
+33   53.048 34.26140 61.03396 47.94430  5.10370269        0.932
+34   43.923 33.47792 62.99501 48.27439 -4.35139228        0.216
+35   45.129 26.78223 56.65772 41.77183  3.35717334        0.792
+36   42.179 31.72234 58.96034 43.64022 -1.46122471        0.408
+37   47.731 29.59350 60.22671 46.44531  1.28569455        0.568
+38   44.414 32.99913 60.27852 46.59281 -2.17881243        0.260
+39   39.735 28.18030 58.43520 40.82104 -1.08603929        0.328
+40   37.629 24.91910 52.25070 37.99869 -0.36969485        0.384
+41   47.105 29.13609 60.74777 45.16747  1.93753314        0.636
+42   42.455 33.85429 63.60744 47.85136 -5.39636213        0.040
+43   43.612 27.43846 56.85124 43.20462  0.40738338        0.512
+44   45.293 29.49797 56.13571 43.32061  1.97238640        0.708
+45   50.383 30.47577 61.90394 46.44969  3.93330775        0.876
+46   42.476 29.10094 58.37142 43.44524 -0.96923662        0.436
+47   37.028 21.77949 52.14139 37.00884  0.01916046        0.568
+48   37.115 25.56274 53.96618 39.75924 -2.64424143        0.252
+49   52.200 28.19492 60.57837 47.31671  4.88329499        0.920
+50   40.646 31.46506 61.67381 47.17930 -6.53329545        0.068
+51   48.344 29.93747 58.91775 45.10028  3.24371506        0.836
+52   44.796 31.21430 59.09139 44.63610  0.15990099        0.540
+53   47.434 31.85162 61.19675 46.09680  1.33719702        0.612
+54   43.086 29.04623 56.66165 42.83942  0.24657885        0.464
+55   38.336 25.53233 54.71949 40.76778 -2.43177584        0.236
+56   36.357 22.21853 54.01720 37.11068 -0.75368394        0.428
+57   51.102 31.46724 63.78684 50.41027  0.69173146        0.392
+58   36.929 26.58508 54.80884 40.41533 -3.48633110        0.108
+59   48.773 31.83951 63.42884 47.67138  1.10161730        0.444
+60   41.982 29.60907 64.24766 46.08098 -4.09897992        0.104
+61   49.702 31.64452 58.42077 45.74356  3.95843839        0.924
+62   43.217 31.18005 57.32591 44.19781 -0.98081476        0.632
+63   48.911 34.49187 62.49248 49.22797 -0.31697433        0.676
+64   52.967 33.23063 63.85374 49.85921  3.10779225        0.920
+65   43.398 31.99828 60.48335 45.67546 -2.27746300        0.312
+66   43.082 31.70660 63.05698 45.87487 -2.79286775        0.264
+67   43.399 25.83982 55.60074 42.10267  1.29633047        0.604
+68   47.183 30.34729 57.06536 42.46739  4.71561273        0.896
+69   47.769 29.44452 58.29313 44.54569  3.22330576        0.740
+70   43.505 25.99178 54.96001 41.68366  1.82133589        0.612
+71   36.669 24.49607 51.50369 39.05156 -2.38256399        0.292
+72   38.732 27.69639 56.92725 42.13654 -3.40454418        0.192
+73   53.350 33.89755 61.13125 48.48341  4.86658569        0.896
+74   36.050 25.59857 55.21073 40.60197 -4.55196948        0.192
+75   44.561 26.32535 55.45227 41.98991  2.57108850        0.804
+76   39.520 25.59465 56.97750 40.73778 -1.21777826        0.504
+77   45.824 30.39917 58.57493 45.41391  0.41009459        0.528
+78   40.272 24.52028 55.30396 40.91231 -0.64031190        0.396
+79   35.956 22.35737 49.22153 36.72336 -0.76736355        0.412
+80   36.419 23.14835 51.84597 37.18744 -0.76843802        0.440
+81   43.272 25.45026 55.55077 41.20362  2.06838087        0.648
+82   47.973 35.12921 63.27278 49.95874 -1.98573772        0.312
+83   44.646 30.08819 57.58276 44.68915 -0.04314830        0.480
+84   41.760 28.81840 58.79675 43.69842 -1.93841993        0.296
+85   50.922 33.57274 65.68669 48.19257  2.72943305        0.744
+86   43.890 33.12016 60.76749 46.94037 -3.05037254        0.276
+87   43.692 27.19173 56.14300 40.73543  2.95657071        0.776
+88   36.615 23.87694 53.14313 37.72353 -1.10853146        0.472
+89   44.441 32.77740 61.00383 46.64299 -2.20198606        0.180
+90   35.579 22.22523 52.10174 36.82967 -1.25066650        0.252
+91   39.670 25.06152 54.97229 40.42795 -0.75794640        0.368
+92   39.629 21.36231 51.47417 37.67592  1.95308391        0.580
+93   43.719 28.70424 58.23860 42.62994  1.08905504        0.720
+94   44.436 26.43817 56.73615 41.21340  3.22260255        0.792
+95   36.147 22.04659 48.95231 36.61964 -0.47263543        0.544
+96   38.808 24.59783 57.18287 39.31419 -0.50619399        0.588
+97   42.351 29.17576 58.65145 44.63342 -2.28241958        0.280
+98   46.508 31.22597 60.24034 44.82092  1.68707938        0.700
+99   41.091 30.61806 59.60293 44.98613 -3.89513385        0.176
+100  50.662 32.92088 60.25392 46.12216  4.53983970        0.864
+101  45.283 30.63019 60.03951 45.14071  0.14229348        0.508
+102  43.999 31.10633 58.15398 43.35615  0.64284734        0.512
+103  40.018 24.24068 53.07444 39.35130  0.66669570        0.592
+104  36.211 23.38106 51.83863 37.36486 -1.15386434        0.356
+> ##
+> ## PREDICCIONES DEL MODELO lmer y EXPLICACION de los residuos de DHARMA
+> plot(fitted(modelo), modelo@frame[,1]); abline(a=0, b=1, col="red", lwd=2)
+> predict.lmer <- predictInterval(modelo, newdata=datos, level=0.999)
+> predicciones <- data.frame(modelo@frame[1], predict.lmer[3], predict.lmer[2], predict.lmer[1])
+> predicciones$residuos <- predicciones[,1] - predicciones[,4]
+> predicciones$residsDHARMA <- residuos.mixto$scaledResiduals
+> predicciones
+    a_por_b      lwr      upr      fit    residuos residsDHARMA
+1    46.106 29.54682 62.25744 44.43984  1.66616180        0.564
+2    52.994 37.62881 69.76758 53.95878 -0.96478299        0.336
+3    46.869 34.10360 63.72283 48.62804 -1.75904154        0.212
+4    41.472 30.67992 56.35762 42.47866 -1.00666213        0.344
+5    50.387 35.77055 65.98070 49.57749  0.80951053        0.604
+6    45.077 34.06957 59.47394 47.09991 -2.02291214        0.356
+7    52.136 31.60419 62.25185 47.46942  4.66658135        0.896
+8    45.497 33.29906 61.54990 47.12521 -1.62820859        0.340
+9    48.748 31.42950 61.73018 45.82414  2.92386240        0.712
+10   49.283 35.65203 65.38432 49.57360 -0.29059515        0.348
+11   45.198 35.61731 64.70190 50.13504 -4.93703892        0.076
+12   43.521 30.89166 59.63396 45.39051 -1.86950658        0.260
+13   52.929 39.28472 66.11646 52.53601  0.39299017        0.700
+14   47.991 35.64785 65.03055 51.20157 -3.21056949        0.316
+15   61.589 34.45800 63.62242 50.31379 11.27520806        0.996
+16   45.365 37.31444 64.25485 50.47376 -5.10876086        0.152
+17   43.582 28.86132 56.93665 41.59942  1.98257856        0.556
+18   42.086 29.72459 58.50733 44.46787 -2.38186966        0.196
+19   40.943 29.91408 59.18854 45.47964 -4.53664115        0.100
+20   43.967 28.66872 59.09208 42.78459  1.18241472        0.500
+21   50.756 32.42204 63.62948 47.45537  3.30063218        0.844
+22   42.974 31.71188 59.00742 45.08220 -2.10820045        0.284
+23   52.054 31.35197 61.50127 46.53540  5.51860479        0.964
+24   42.123 30.00390 58.65562 44.51087 -2.38787004        0.368
+25   47.993 39.68293 68.93886 53.27520 -5.28220025        0.024
+26   43.208 29.71430 58.65160 44.69427 -1.48626710        0.156
+27   44.750 32.42775 61.18427 46.55313 -1.80312978        0.156
+28   44.930 28.95006 59.67813 45.39055 -0.46054533        0.300
+29   55.595 33.55415 67.01579 50.59106  5.00394287        0.952
+30   50.671 35.54874 63.31915 48.70288  1.96812172        0.848
+31   56.611 38.14156 66.67646 50.39111  6.21988862        0.984
+32   44.362 34.65015 63.33862 48.88726 -4.52526433        0.312
+33   53.048 35.54345 65.31585 47.92964  5.11835567        0.932
+34   43.923 34.22912 61.07616 48.27327 -4.35027145        0.216
+35   45.129 27.60701 57.85131 41.93719  3.19181275        0.792
+36   42.179 30.28256 56.97902 44.33005 -2.15104725        0.408
+37   47.731 30.92668 60.25238 46.14714  1.58386012        0.568
+38   44.414 30.66929 59.31892 46.98862 -2.57462092        0.260
+39   39.735 28.28313 57.32825 41.04870 -1.31370028        0.328
+40   37.629 24.33943 52.03622 37.86702 -0.23802495        0.384
+41   47.105 27.92255 59.50583 45.07670  2.02830362        0.636
+42   42.455 34.47297 62.13637 47.69012 -5.23512437        0.040
+43   43.612 27.61629 57.81999 43.06268  0.54932127        0.512
+44   45.293 27.91538 57.14741 42.87696  2.41604405        0.708
+45   50.383 31.75342 61.11522 45.87146  4.51154365        0.876
+46   42.476 29.58954 57.93299 43.25216 -0.77615800        0.436
+47   37.028 21.67602 50.36970 37.42890 -0.40089855        0.568
+48   37.115 26.95425 54.44416 40.09414 -2.97913612        0.252
+49   52.200 32.77832 62.45859 47.05865  5.14134679        0.920
+50   40.646 33.73730 59.96370 47.29981 -6.65380978        0.068
+51   48.344 32.07116 58.80084 45.13691  3.20708666        0.836
+52   44.796 29.43999 58.31069 44.67809  0.11791231        0.540
+53   47.434 33.10902 57.72604 45.69406  1.73994027        0.612
+54   43.086 30.11186 57.67628 42.91447  0.17152523        0.464
+55   38.336 26.88887 54.63130 40.80426 -2.46826319        0.236
+56   36.357 23.52000 49.94468 37.04366 -0.68666180        0.428
+57   51.102 35.45123 65.94179 50.65347  0.44852919        0.392
+58   36.929 27.54998 54.71755 40.79202 -3.86302397        0.108
+59   48.773 34.69676 62.04178 47.76654  1.00646236        0.444
+60   41.982 32.49828 61.81371 45.98413 -4.00212512        0.104
+61   49.702 31.31752 59.24398 45.90100  3.80099535        0.924
+62   43.217 30.11432 58.39073 44.22150 -1.00449986        0.632
+63   48.911 35.58386 62.80429 49.17771 -0.26671064        0.676
+64   52.967 35.25345 63.68215 49.95870  3.00829627        0.920
+65   43.398 31.46433 59.97457 45.41072 -2.01271650        0.312
+66   43.082 30.96124 58.73879 46.01066 -2.92866437        0.264
+67   43.399 28.27341 59.25644 42.75907  0.63993331        0.604
+68   47.183 28.76765 55.91671 42.82677  4.35622813        0.896
+69   47.769 29.84360 59.45030 44.82328  2.94571909        0.740
+70   43.505 25.12685 53.96227 41.61732  1.88767719        0.612
+71   36.669 25.62492 52.70488 38.62754 -1.95853966        0.292
+72   38.732 25.57504 55.45102 42.11355 -3.38155105        0.192
+73   53.350 33.85649 60.12555 48.50266  4.84734297        0.896
+74   36.050 27.53393 55.81288 40.43842 -4.38842217        0.192
+75   44.561 28.91652 55.65984 42.06014  2.50086247        0.804
+76   39.520 27.70343 53.62199 40.78671 -1.26671304        0.504
+77   45.824 31.29232 59.79109 45.62796  0.19603555        0.528
+78   40.272 27.23872 55.49515 41.00372 -0.73172145        0.396
+79   35.956 23.98599 53.41900 36.86930 -0.91329770        0.412
+80   36.419 23.85685 51.77020 37.33708 -0.91807661        0.440
+81   43.272 25.13369 56.09803 41.07328  2.19872261        0.648
+82   47.973 31.74575 65.58257 49.72531 -1.75231043        0.312
+83   44.646 29.76273 58.63862 44.81644 -0.17043908        0.480
+84   41.760 28.92705 57.77902 43.53102 -1.77102434        0.296
+85   50.922 34.60388 61.61920 48.01368  2.90832315        0.744
+86   43.890 31.03532 62.43571 47.19436 -3.30436235        0.276
+87   43.692 27.44047 53.44690 40.48615  3.20584768        0.776
+88   36.615 23.08098 53.18395 37.84876 -1.23376311        0.472
+89   44.441 32.59538 61.00795 46.79108 -2.35007885        0.180
+90   35.579 20.53702 53.78152 36.99908 -1.42008495        0.252
+91   39.670 26.55027 53.95554 40.44096 -0.77095525        0.368
+92   39.629 22.98220 53.68696 37.76723  1.86177006        0.580
+93   43.719 27.21258 57.09788 42.50881  1.21019397        0.720
+94   44.436 27.04242 58.92806 41.43225  3.00374707        0.792
+95   36.147 23.54783 52.92009 36.83355 -0.68655342        0.544
+96   38.808 24.11543 53.59953 39.78384 -0.97583799        0.588
+97   42.351 29.62757 57.80902 44.75256 -2.40156361        0.280
+98   46.508 29.19379 61.75741 44.84981  1.65819127        0.700
+99   41.091 31.77766 59.77742 45.19335 -4.10235099        0.176
+100  50.662 32.64318 62.51452 45.95540  4.70659796        0.864
+101  45.283 30.36625 62.17923 45.37288 -0.08988184        0.508
+102  43.999 30.20154 57.12957 43.83403  0.16496930        0.512
+103  40.018 23.95627 54.57347 39.81590  0.20209700        0.592
+104  36.211 20.94286 53.04778 37.61958 -1.40857692        0.356
+> predict.lmer <- predictInterval(modelo, newdata=datos, level=0.95)
+> predicciones <- data.frame(modelo@frame[1], predict.lmer[3], predict.lmer[2], predict.lmer[1])
+> predicciones$residuos <- predicciones[,1] - predicciones[,4]
+> predicciones$residsDHARMA <- residuos.mixto$scaledResiduals
+> predicciones
+    a_por_b      lwr      upr      fit    residuos residsDHARMA
+1    46.106 35.35698 53.29808 44.24265  1.86334533        0.564
+2    52.994 45.40992 63.40569 53.69848 -0.70447572        0.336
+3    46.869 39.66553 57.29758 48.48116 -1.61215765        0.212
+4    41.472 33.62199 51.74734 42.69259 -1.22059255        0.344
+5    50.387 40.05395 58.32675 49.17811  1.20889215        0.604
+6    45.077 37.40622 55.78564 46.77542 -1.69841550        0.356
+7    52.136 38.62424 56.72209 47.78657  4.34942846        0.896
+8    45.497 38.09681 56.34172 47.25571 -1.75870640        0.340
+9    48.748 36.38665 54.59308 45.34516  3.40284143        0.712
+10   49.283 41.01346 58.05460 49.50038 -0.21738144        0.348
+11   45.198 39.75229 58.76003 49.28007 -4.08207373        0.076
+12   43.521 36.43719 54.77324 45.19158 -1.67058371        0.260
+13   52.929 43.13856 61.10373 52.22500  0.70399899        0.700
+14   47.991 41.41716 59.99432 50.83786 -2.84686344        0.316
+15   61.589 41.11622 59.19546 49.86435 11.72464723        0.996
+16   45.365 41.15922 59.76182 50.50494 -5.13993501        0.152
+17   43.582 32.08285 50.99002 41.26526  2.31674459        0.556
+18   42.086 35.68442 53.10384 44.35192 -2.26592370        0.196
+19   40.943 36.05908 54.17694 45.36323 -4.42022998        0.100
+20   43.967 33.77707 51.92391 42.97390  0.99310469        0.500
+21   50.756 38.76922 56.76671 47.62357  3.13243052        0.844
+22   42.974 36.42639 54.48133 45.72539 -2.75138828        0.284
+23   52.054 37.60879 55.83011 46.67339  5.38061435        0.964
+24   42.123 35.12616 53.92000 44.11144 -1.98843613        0.368
+25   47.993 43.98504 62.17038 53.25930 -5.26630123        0.024
+26   43.208 36.35129 53.52286 44.81982 -1.61182495        0.156
+27   44.750 37.63716 55.60263 46.41101 -1.66100822        0.156
+28   44.930 36.49420 53.95282 45.08547 -0.15547479        0.300
+29   55.595 41.22588 59.91430 50.35694  5.23806213        0.952
+30   50.671 39.65734 58.89850 48.86807  1.80292535        0.848
+31   56.611 41.19174 59.23781 50.35970  6.25130174        0.984
+32   44.362 40.30623 58.18845 49.04101 -4.67900964        0.312
+33   53.048 38.75135 56.82569 48.04520  5.00279760        0.932
+34   43.923 39.18614 57.78234 48.00393 -4.08092777        0.216
+35   45.129 32.77112 50.37600 41.53568  3.59332014        0.792
+36   42.179 35.33672 52.95609 43.82950 -1.65049992        0.408
+37   47.731 37.73223 55.50337 46.30852  1.42248398        0.568
+38   44.414 37.85643 55.65840 46.91484 -2.50083616        0.260
+39   39.735 31.93714 50.11196 40.94505 -1.21005250        0.328
+40   37.629 29.34427 47.35104 37.90503 -0.27602775        0.384
+41   47.105 36.69109 54.12813 45.33281  1.77218733        0.636
+42   42.455 39.30408 57.91648 47.97747 -5.52246944        0.040
+43   43.612 34.14439 51.87572 43.08556  0.52644114        0.512
+44   45.293 34.33407 51.70447 42.85078  2.44221678        0.708
+45   50.383 37.18514 54.87131 46.05712  4.32588209        0.876
+46   42.476 34.55395 51.86538 43.41108 -0.93508309        0.436
+47   37.028 28.48336 45.74826 36.71303  0.31496625        0.568
+48   37.115 31.84403 48.91067 39.83943 -2.72443305        0.252
+49   52.200 38.25946 56.37546 47.22921  4.97078850        0.920
+50   40.646 38.53193 56.15432 47.67774 -7.03173566        0.068
+51   48.344 36.25030 54.67362 45.06785  3.27615443        0.836
+52   44.796 36.10694 53.34578 44.81935 -0.02334929        0.540
+53   47.434 36.48299 55.43013 46.37896  1.05504202        0.612
+54   43.086 34.35443 52.19095 43.06371  0.02229049        0.464
+55   38.336 31.45723 49.53621 41.08305 -2.74705391        0.236
+56   36.357 28.16633 46.72272 37.28265 -0.92565399        0.428
+57   51.102 41.26381 60.07099 50.14182  0.96018386        0.392
+58   36.929 31.76330 49.82889 40.45486 -3.52585707        0.108
+59   48.773 38.94048 56.59176 47.60093  1.17207030        0.444
+60   41.982 36.92334 55.34280 45.96652 -3.98451561        0.104
+61   49.702 37.00878 54.20284 46.00719  3.69480917        0.924
+62   43.217 35.69588 53.04116 44.38342 -1.16641594        0.632
+63   48.911 40.48130 58.24027 49.20529 -0.29428561        0.676
+64   52.967 40.72020 59.10077 49.97680  2.99020453        0.920
+65   43.398 36.24532 54.42516 45.42542 -2.02742362        0.312
+66   43.082 36.89726 54.84648 46.10176 -3.01976281        0.264
+67   43.399 33.43770 50.98237 42.57395  0.82504936        0.604
+68   47.183 33.31578 51.69384 42.72885  4.45414697        0.896
+69   47.769 35.01376 53.89793 44.59296  3.17603763        0.740
+70   43.505 33.40437 50.32775 41.58299  1.92200799        0.612
+71   36.669 29.86876 47.59853 38.95969 -2.29068965        0.292
+72   38.732 32.91268 50.93525 42.28565 -3.55364602        0.192
+73   53.350 39.60556 58.28518 48.73952  4.61047966        0.896
+74   36.050 31.42800 50.09281 40.84810 -4.79809793        0.192
+75   44.561 32.48320 50.47463 41.88066  2.68033505        0.804
+76   39.520 31.81345 49.96624 40.51376 -0.99376239        0.504
+77   45.824 36.22036 53.98150 45.30829  0.51571472        0.528
+78   40.272 31.28946 49.52898 40.62223 -0.35022520        0.396
+79   35.956 27.39075 45.99136 36.22898 -0.27297756        0.412
+80   36.419 27.80413 47.24082 36.74636 -0.32736185        0.440
+81   43.272 31.82026 49.58439 41.06154  2.21046102        0.648
+82   47.973 40.35203 58.62558 49.40493 -1.43192561        0.312
+83   44.646 35.85757 53.52766 44.82706 -0.18106088        0.480
+84   41.760 34.39233 52.21415 43.29794 -1.53794489        0.296
+85   50.922 39.28842 57.54747 48.23826  2.68374027        0.744
+86   43.890 37.79605 56.44638 46.84269 -2.95269339        0.276
+87   43.692 31.83646 49.85889 40.78939  2.90261320        0.776
+88   36.615 28.80709 47.17132 38.03088 -1.41588482        0.472
+89   44.441 37.86109 56.67417 46.65337 -2.21237096        0.180
+90   35.579 28.24145 46.48107 37.23946 -1.66045747        0.252
+91   39.670 31.24338 50.17284 40.52643 -0.85643036        0.368
+92   39.629 29.09810 46.57400 37.66736  1.96164217        0.580
+93   43.719 33.38795 51.98500 42.64372  1.07527941        0.720
+94   44.436 32.47596 50.02061 41.41520  3.02080199        0.792
+95   36.147 27.84799 45.75361 36.63139 -0.48439326        0.544
+96   38.808 29.82380 48.69067 39.11477 -0.30676511        0.588
+97   42.351 35.47667 53.00219 44.63545 -2.28445452        0.280
+98   46.508 35.54092 54.14588 45.38188  1.12612294        0.700
+99   41.091 36.47099 54.70869 45.00429 -3.91328840        0.176
+100  50.662 36.63311 55.12467 45.95691  4.70509277        0.864
+101  45.283 36.23703 53.84781 45.23719  0.04581098        0.508
+102  43.999 34.12221 52.75105 43.33283  0.66617253        0.512
+103  40.018 30.64357 48.08482 39.15329  0.86470519        0.592
+104  36.211 28.95103 46.27879 37.26806 -1.05706251        0.356
+> ##
+> ## PREDICCIONES DEL MODELO lmer y EXPLICACION de los residuos de DHARMA
+> plot(fitted(modelo), modelo@frame[,1]); abline(a=0, b=1, col="red", lwd=2)
+> predict.lmer <- predictInterval(modelo, newdata=datos, level=0.95)
+> predicciones <- data.frame(modelo@frame[1], predict.lmer[3], predict.lmer[2], predict.lmer[1])
+> predicciones$residuos <- predicciones[,1] - predicciones[,4]
+> predicciones$residsDHARMA <- residuos.mixto$scaledResiduals
+> predicciones
+    a_por_b      lwr      upr      fit    residuos residsDHARMA
+1    46.106 35.75930 53.93720 44.48985  1.61615109        0.564
+2    52.994 44.87286 62.74442 53.68395 -0.68995016        0.336
+3    46.869 39.15921 57.50196 48.42221 -1.55320554        0.212
+4    41.472 32.93612 51.52655 42.43316 -0.96116101        0.344
+5    50.387 40.17195 58.12158 49.47258  0.91441639        0.604
+6    45.077 38.08577 56.00275 47.08772 -2.01072318        0.356
+7    52.136 38.85798 56.91915 47.79723  4.33876930        0.896
+8    45.497 38.64825 57.41588 47.50179 -2.00478629        0.340
+9    48.748 37.01868 54.75858 45.77029  2.97771217        0.712
+10   49.283 40.56161 59.16755 49.72327 -0.44027272        0.348
+11   45.198 40.02029 58.65797 49.49642 -4.29842139        0.076
+12   43.521 36.38650 54.26020 44.80960 -1.28859534        0.260
+13   52.929 43.91469 61.23427 52.49944  0.42955996        0.700
+14   47.991 42.56172 60.07758 51.12036 -3.12935704        0.316
+15   61.589 41.36523 58.72513 50.66170 10.92730357        0.996
+
+Vamos al dato 15 qeu es el outlier vemos en residuos que la diferencia del observado y del modelo es de 10 puntos por lo que lo mete en el percentil 99,6 al colocar nuestro observado en la distribucion de probabilidad de valores vemos que queda en la cola y eso lo puntua así. DHARMa ordena los residuos en los percentiles. Si el modelo atina las predicciones seran muy estrechas. cada punto que vemos es como el valor observado se desvia de lo predicho pero teniendo en cuenta la variabilidad posible del modelo, con su incertidumbre asociada.
+
+testUniformity(modelo.mixto)
+
+la p0.3696 es similar al saphiro y nos dice que no se desvia de la normalidad. Es mejor este que saphiro. ESte test solo tiene sentido para distribuciones de una sola variable. Nos dice que la media y desviacion tipica no son iguales. 
+Homocedasticidad residual: la varianza residual es homogenea a lo largo de los valores predichos del modelo, o lo que se lo mismo la variacion residual en ir y luz es igual no hay mas en uno que en otro.
+
+testQuantiles(modelo.mixto)
+
+aqui vemos la densidad de datos qeu existen en el percentil 25, cual en 50...la recta punteada es la teorica. Vemos que hay tendencias de leves desvios no son suficientemente intensos como para definir que hay un problema importante de violentacion del supuesto de homocedasticidad, la p=0,27 no es lo ideal nos gustaria 0,95 pero igualmente con estos datos esta muy bien. Aunque no son planas no hay problema, si esto sale significativo o en rojo las lineas es que estamos violentando el supuesto de hommocedasticidad residual.
+
+> plot(fitted(modelo),(residuals(modelo)))
+
+si vemos cosas que no es como una mesa de billar con bolas distribuidas al azar y vemos como un cono tenemos problemas de homocedasticidad. 
+
+Este cono tb se ve en el grafico de DHarma con la linea rojja que a la iz los valores varian menos que a la derecha.. igualmente dharma nos dice que esto no es relevante
  

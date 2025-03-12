@@ -444,9 +444,9 @@ plot(residuos.mixto$scaledResiduals, residuals(modelo.mixto))
 ##
 ## PREDICCIONES DEL MODELO lmer y EXPLICACION de los residuos de DHARMA
 plot(fitted(modelo), modelo@frame[,1]); abline(a=0, b=1, col="red", lwd=2)
-predict.lmer <- predictInterval(modelo, newdata=datos, level=0.999)
+predict.lmer <- predictInterval(modelo, newdata=datos, level=0.95)
 predicciones <- data.frame(modelo@frame[1], predict.lmer[3], predict.lmer[2], predict.lmer[1])
-predicciones$residuos <- predicciones[1] - predicciones[4]
+predicciones$residuos <- predicciones[,1] - predicciones[,4]
 predicciones$residsDHARMA <- residuos.mixto$scaledResiduals
 predicciones
 
