@@ -823,4 +823,92 @@ aqui vemos la densidad de datos qeu existen en el percentil 25, cual en 50...la 
 si vemos cosas que no es como una mesa de billar con bolas distribuidas al azar y vemos como un cono tenemos problemas de homocedasticidad. 
 
 Este cono tb se ve en el grafico de DHarma con la linea rojja que a la iz los valores varian menos que a la derecha.. igualmente dharma nos dice que esto no es relevante
+
+> plot((datos$t_sonda),(residuals(modelo)))
+
+vemos que no hay un patron conico si no el de mesa de billar, antes lo haciamos con todas las predictoras, el random intercept etc y ahora es solo con una predictora. los residuos deberian ser un abline = 0
+
+> abline(h=0,col="red", lwd=5)
+
+Vemos aproximadamente la misma variacion a lo largo de la linea.
+
+ESto podemos hacerlo una por una las predictoras etc, o todas juntas que fue lo de antes de fitted modelo.
+
+Segundo aspecto mas importante que la normalidad es que cuando no hay bolas al azar en la mesa de billar si no distribuciones triangulares (no hay normalidad de res o homocedasticidad) si predomina la triangular de peqeuña a grande inflamos el ERROR de tipo I los resultados seran mas significativos de lo que deberian ser si no hubisemos violado el ppio de homocedasticidad si lo que ocurre es que la varianza residual es mas grande en observaciones pequeñas que en observaciones grandes inflamos el ERROR de TIPO II tendemos a aceptar la hipotesis nula de ausencia de fectos. A esta conclusions se llega haciendo simnulaciones.
+
+
+## OUTLIERS
+
+que está ocurriendo, ha sido un error nuestro?, no lo sabemos? podemos consultar nuestra toma de datos? efectivamente es un valor extremo??
+
+testOutliers(modelo.mixto)
+
+Vemos que en este caso no me sale que haya un problema con ello.
+
+Aqui a partir de los residuos escalados de dharma cuales estan por encima del percentil 0,995 o por debajo de 0,005 es decir los extremos que vimos
+
+Y con este dato me mosqueo pero no encuentro motivos pa quitarla pues la dejo pero si los encuentro pues la quito.
+residuos_ordinales <- residuos.mixto$scaledResiduals
+which(residuos_ordinales<0.005 | residuos_ordinales>0.995)  ## con valores predefinidos escalados extremos (aqui 1% 
+¿como puedo hacer para reconstruir el modelo sin el sin construir el modelo sin el?
+mm <- update(modelo,data=datos[-15,]) 
+mas extremos)
+## 
+
+
+influencePlot(modelo, main="distancia de Cook: tamannio del circulo")   ## con un listado de las observaciones potencialmente problematicas
+
+medida de como de influente es la observacion
+
+Residuos estudentizados es lo mismo que los residuos pero llevado a la escala de la t d student si sabemos los grados de libertad residuales y vamos a la tabl t de student y vemos su valor para n grados de libertad para 0.001.
+
+estas lineas discontinuas marcan el t de student de preocpacion por debajo y por arriba tras consultar con los grados de libertad  y tal. 
+
+El punto con 15 vemos que es chungo chunguero porque no es que sea un poco es que esta muy lejos. La 50 bueno esta cerca del limite inferior...y lo normal es que el 5% de las observaciones queden fuera del intercalo y tengo 104 asi que no preocupa pero la 15 es algo exGERADO. ademas identificamos otro problema, cuanto cambia los parametros del modelo, ergo coeficientes, si lo hago con esa observacion o sin esa observacion.
+
+En eje X del azul vemos como cambian las distancias de cook que es como cambian los parametros del modelo añadiendo y quitando esos puntos cuando mas oscuro y grande mas cambia. nunca utilizaremos un dato con una distancia de cOOk mayor que 1. Con el y sin el todo cambia, en este ejemplo el mas alto con cook es 15 pero no llega a 1. El eje x es el leverage. o hat value. Se ve en eje X, es una mediad de como de extremas son las medidas o los valores, o en como de estremos son las uds muestrales en las variables predictoras, por tanto un mayor hat value lo uqe me dice es que si por ejemplo he muestreado en el mulacen a 3400 m en un frio rocos y que te pelas en invierno del frio con lo cual el punto este del mulacen tiene unas caracteriscticas estremas climaticas comparado con el resto del clima mediterraneo en españa. El problema del valor del levarage no es que sea grande es qeu ese valor de gran hat value condicione el cambio de las predictoras. Conlusion el problema no es tener la fila 57 con valor muy extremo de las predictoras (no de la respuesta) si no que tenga una influencia alta y eso lo vemos con la distancia de cook que es minima con lo cual lo parametros de nuestro modelo no cambian con o sin ella y encima vemos que los residuos son minimos estan cerca del 0 por lo que esos valores no afectan a los valores del modelo. Si veo un gran hat value me preocupara cuando este arrib o abajo cerca o fuera d los limites de studentized residuals o qeu su distancia de cook sea grande muy azules.
+
+Comprobar residuos normalidad, heterocedasticidad y el grafico este del leverage cook studentized. TODO ESTO DE LA RESPUESTA
+
+Si dejo datos outliers tendreque corregir con erramientos que veremos. 
+
+PREDICTORAS - multicolinealidad, la predictoras son muy independientes entre si o no??? VIF que es cmo que las varibales predictoras una con otras una con todas o una con dos o como sea , cada una de estas predictoras es explicada por todas las demas predictoras. Que vamos a preguntarnos, como una predictora, cuanta varianza de esa predictora se puede explicar por las otras predictoras (NO MENTAMOS PARA NADA LA RESPUESTA), es decir, que CANTIDAD de una predictora (es ocmo si ahora esta fuese larespeusta) puede ser explicada por otras predictoras.
+
+> check_collinearity(modelo)
+# Check for Multicollinearity
+
+Low Correlation
+
+           Term  VIF   VIF 95% CI Increased SE Tolerance Tolerance 95% CI
+        t_sonda 2.98 [2.40, 3.80]         1.73      0.34     [0.26, 0.42]
+         fuente 2.76 [2.23, 3.51]         1.66      0.36     [0.29, 0.45]
+        especie 1.03 [1.00, 4.05]         1.02      0.97     [0.25, 1.00]
+ fuente:especie 1.19 [1.07, 1.52]         1.09      0.84     [0.66, 0.94]
+ 
+ 
+ la tolerancia de tsonda el 0.34, el 66% de lavariacion de la temperatura de la sonda puede ser explicada por lassituaciones exp de especie y la fuente,
+
+Si sale 0 es que son indepen pero si sale un 99 tengo un problema, tipico ejemplo altitud y temperatura por el gradiente adiabatico. Si existe colinealidad hay que valorar que hacer. La funcion lo que hace es que coje predictora a predictora la pone ocmo si fuera una respuesta y las intenta explicar por las otras predictoras, y eso me da el VIF que significa lo siguiente:
+
+La raiz cuadrada del valor VIF cuantifica por cuanto he multiplicado el error estándar teórico que sale inflado en mi summary. Un VIF de 4 para una pre de un grado de libertad la raiz cuadrada de 4 es 2 y en mi summary modelo el error estandar que estoy viendo es 2 veces más grande que lo que habria visto si estas variables fuesen independientes. Un VIF de 4 ya me hace tener que pensar o me deberia hacerlo. Tanto mas tiene un VIF alto una predictora menos creible son sus p porque sus errores estan muy inflados y puede qeu acepte una hipotesis nula. 
+
+
+si vemos summary(modelo)
+
+> 0.21/1.73
+[1] 0.1213873
+
+el error estandar de tsonda es 0.21 si divido con la tolerancia me dice qeu el error habria sido 0.12 es decir que se ha inflado un 73% por eso de uqe divido entrre 1.73 con un vif de 4 es qeu lo duplico directamente.
+
+vamos a repetir el modelo ahora mmm quitando una predictora
+
+> mmm <- update(modelo, .~.-t_sonda)
+
+al ver summary mmm
+
+fuente1            -1.3547     0.4486 65.0000  -3.020  0.00361 ** 
+
+el eerror es menor porque antes con el vif el 2.76 inflaba el error
+
+
  
