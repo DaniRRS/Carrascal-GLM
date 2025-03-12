@@ -1265,3 +1265,19 @@ a_por_b ~ t_sonda + fuente + especie + (1 | id) + fuente:especie
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
+
+
+> rand(lmer.2)
+boundary (singular) fit: see help('isSingular')
+boundary (singular) fit: see help('isSingular')
+ANOVA-like table for random-effects: Single term deletions
+
+Model:
+a_por_b ~ t_sonda + fuente + especie + (1 + t_sonda + fuente | id) + fuente:especie
+                                       npar  logLik    AIC     LRT Df Pr(>Chisq)
+<none>                                   34 -248.25 564.50                      
+t_sonda in (1 + t_sonda + fuente | id)   31 -249.08 560.15 1.65521  3     0.6469
+fuente in (1 + t_sonda + fuente | id)    31 -248.73 559.47 0.96806  3     0.8090
+
+ningun efecto aleatorio significativo. El random aqui esta controlando por random intercept and random slopes, esto isignifica que no hay diferencia en las regresiones de las pendientes en los 26 individuos y no difieren entre si y se puede generalizar una pemndiente para los 26 y con la fuente igual todos los individuos tienen la misma tasa de cambio . Por lo tanto para que complicarlo si no hay ese efecto.
+
