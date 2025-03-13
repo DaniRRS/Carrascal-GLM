@@ -1,0 +1,14 @@
+---
+title: "sam_mixtos_glmmTMB"
+author: "DaniRRS"
+date: "2025-03-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## glmmTMB
+
+En modelos mixtos hay un problemas si los valores son altos los predictores son muy pequeños y a veces peta por eso es mejor trabajar con scale, que asi computacionalmente es mas eficiente y estable y no petan.

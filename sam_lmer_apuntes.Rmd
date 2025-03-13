@@ -1360,3 +1360,333 @@ plot(Effect("fuente", partial.residuals=F, modelo), lwd=3, lty=1, rotx=45,
      partial.residuals=list(col="blue", pch=1, cex=1.25), rug=F)
 
 solo por fuente controlado por especie, t sonda etc
+
+De la heterocedasticidad
+
+testCategorical(modelo.mixto, datos$fuente)                   ## *** ojo !!  poned aqui VUESTROS DATOS ***
+
+es un test de DHARMa que hace dos cosas, examina si los niveles de fuente (luz, ir) tienen la misma variación residual, porque si es la misma no hay un error estándar común. Los residuos dentro de ir no se desvian de la normal y dentro de luz tampoco. La varianza residual observada en infrarojo y luz no difieren entre si que es lo que tenemos en la consola.
+
+$homogeneity
+Levene's Test for Homogeneity of Variance (center = median)
+       Df F value Pr(>F)
+group   1  0.5138 0.4751
+      102               
+      
+testCategorical(modelo.mixto, datos$especie)                   ## *** ojo !!  poned aqui VUESTROS DATOS ***
+
+con esto vemos por especie por ejemplo.
+
+testCategorical(modelo.mixto, datos$id)                   ## *** ojo !!  poned aqui VUESTROS DATOS ***
+      
+Con esto vemos no violentamos homocedasticidad
+
+Se puede dar el caso de que un nivel del factor random tenga mayor variabilidad saldria en rojo y puede provocar problemas de homocedasticidad. 
+
+
+Test POST HOC:
+
+Si tengo un factor que por ejemplo como especie me da significativo con varios niveles no se donde esta la diferencia. Los test pos hoc identifican pares de un factor con 3 o mas niveles donde podrían estar las diferencias. Los test post hoc dan estimas entre diferencias de los pares del factor que son significativos mas alla del puro azar.
+
+#### TESTS POST-HOC ####
+
+
+Quiero ver si algunos pares de especies difieren entre si. Compararemos 13 pares de especies controlando por la tsonda, el efecto de la fuente y el id
+
+El test mas clasico para esto es Tukey
+
+pairs(emmeans(modelo, c("especie")), adjust="tukey")
+
+sale un churrazo con los pares que s ecomparan y vemos qeu no hay ninguno que sean diferentes o que se acerquen.
+
+Hay un metodo que se condisedara el que mejor balancea el error tipo I y tipo II es el fdr
+
+pairs(emmeans(modelo, c("especie")), adjust="fdr")
+
+los resultados son los mismos.
+
+pairs(emmeans(modelo, c("fuente", "especie")), adjust="tukey")
+
+meto las combinaciones de las dos de esta especie en ir o en lyz la siguiente...
+
+el churro es mayor, como tengo 2 pseudoreplicas no hay potencia y sale todo no significativa, por eso es imprtante este tipo de test cuando tengo un tamño de pseudorreplicacion grande. Cuando summary anova modelo me sale significativo de un factor miro con test post hoc cuales nivels difieren entre si.
+
+Si hemos violentado algunas suposiciones hay dos ofrmas de arreglarlo:
+
+1. establecer la estabilidad de nuestro modelo con bootstrap
+2. usar en vez de tstudent para proporcionar la significacion de modelos mixtos con otros indicadores.
+
+Uso del bootstrap
+
+> kk <- rpois(20,2)
+> sample(kk, replace = T)
+ [1] 2 2 2 2 1 3 4 0 3 2 0 4 2 2 1 1 2 0 0 4
+ 
+ Ejemplo de bootstrap
+ 
+ El bootsrap coge puntos del modelo al azar , pueden ser buenos o omalos y corre el mmodelo una y otra vez asi, 
+ 
+ dim(datos)
+ sample(1:104,replace = T)
+ ii <- sample(1:104,replace = T)
+ sort(ii)
+ddd <- datos[ii,]
+
+Con eso vemos como bootstrapear registros por filas sin mover columnas, cuando hacemos el bootstrap hacemo sglm a esa matriz aleatoria y asi 1000 veces al final tendremos 1000 coeficientes para cada intercepto, predictor...etc
+
+> nn <-rnorm(10,10,3)
+> nn
+ [1]  9.756023  5.909689 13.510970  9.423470  3.523451 11.806133  5.403989  8.383709 13.385724 12.112790
+> nnn <- c(nn,20)
+> nnn
+ [1]  9.756023  5.909689 13.510970  9.423470  3.523451 11.806133  5.403989  8.383709 13.385724 12.112790 20.000000
+> mean(nnn)
+[1] 10.29236
+> mean(nn)
+[1] 9.321595
+> nnn <- c(nn,50)
+> mean(nnn)
+[1] 13.01963
+> quantile(probs= 0.5)
+Error en quantile.default(probs = 0.5): 
+  el argumento "x" está ausente, sin valor por omisión
+> quantile(nnn,probs=0.5)
+     50% 
+9.756023 
+
+
+rpois()
+
+para solventar parametrización de modelos . Consiste en el remuestreo
+
+boot.lmer <- bootstrap_parameters(modelo, ci=0.95, iterations=1000, test=c("p-value", "p_direction", "p_map"), ci_method="BCI")
+boot.lmer
+
+
+en test los estadisticos que me resuma y en ci_mthod el metodo que el mejor es BCI
+
+METODOS PARA INTERVALOS DE CONFIANZA
+
+HDI se usa sobre todo en bayesiana, 
+
+
+Parameter         | Coefficient |          95% CI | p (MAP) |     pd |      p
+-----------------------------------------------------------------------------
+(Intercept)       |        2.69 | [-10.93, 14.65] |  0.963  | 66.10% | 0.678 
+t_sonda           |        1.34 | [  0.96,  1.76] |  < .001 |   100% | < .001
+fuente1           |       -4.33 | [ -5.41, -3.12] |  < .001 |   100% | < .001
+especie1          |        3.59 | [ -0.03,  7.34] |  0.172  | 97.30% | 0.054 
+especie2          |        5.25 | [  1.48,  8.82] |  0.024  | 99.80% | 0.004 
+especie3          |        1.01 | [ -2.45,  4.96] |  0.855  | 71.20% | 0.576 
+
+comentando los resultasdos. 
+
+si quiero tener mucha precision en los bootsrtrap estoy obligado a correr mucho del orden a 10000 porque con mil ocmo pmucho 0,001.
+
+pd que porcentaje de los coeficientes es consistentes con la direccion con el 100% es que siempre fue en la direccion del coeficiente.
+
+
+
+pmap mide la densidad probabilidad de cuando estamos en la punta o de como de mas probable es el valor maximo que la frecuencia de valores que ocurriria cuando la frecuencia vale 0. 
+
+Lo malo de bootstrap es uqe no nos da las tablas de anova.
+
+ddd<-datos
+ddd$respuesta <- ddd$a_por_b
+ii <- sample(1:104, replace=F)
+ddd$respuesta.n <- ddd$respuesta[ii]
+nnn <- update(modelo, respuesta.n~., data =ddd)
+Anova(nnn,test="F", type=3)
+
+solo queremos desacoplar el id y el orden de los datos no que salgan unos mas que otros
+
+PERMUTATION TEST
+
+comparacion de coeficientes observados con permutados para evaluar la hipotesis nula d eque los coeficientes son 0. En frecuentista la p se interpreta : dada que la hipotesis nula es cierta que probabilidad hay de recibir un resultado se de por puro azar. Dada que la hipotesis nula es cierta (coeficiente es 0) que probabilidad hay que de ese resultado por azar.
+
+La sd de un bootstrap o suffling es el error estandar de la distribución. Cuando parametrizo mediante un botstrap el error estandar el la desviacion de la distribucion.
+
+t_sonda           1000  0.016     0.282 -0.120   -0.190 -0.523  0.537 -0.754  0.677    1.332  4.677 0.000
+
+1.332 esta fuera del intervalo de confianza de -0.523 y 0.537, entonces es significativo, creo qeu es porque la hipotesis nula es que es 0 y no hay significancia o algo asi que se interpreta del reves. Difiere el coeficiente neutro del observado? el observado es 1.332 y el neutro? z es media - estimate / error estadar
+
+> -0.018-1.332
+[1] -1.35
+> -0.018-1.332/0.279
+[1] -4.792194
+
+obtengo el valor de z
+
+       n  Q0.9 Q0.95 Q0.99 Q0.995 Estimate     P
+R2m 1000 0.268 0.289 0.329   0.34    0.475 0.000
+R2c 1000 0.327 0.362 0.450   0.46    0.593 0.001
+
+NOTA IMPORTANTE
+
+> testUniformity(modtmb)
+
+	Asymptotic one-sample Kolmogorov-Smirnov test
+
+data:  simulationOutput$scaledResiduals
+D = 0.097462, p-value = 0.2766
+alternative hypothesis: two-sided
+
+dispersion test como es una normal no nos aplica es para otras distribuciones
+
+
+
+miro ese valor de z y me da el valor de significancia 
+
+
+> testQuantiles(modtmb)
+
+	Test for location of quantiles via qgam
+
+data:  res
+p-value = 0.2947
+alternative hypothesis: both
+
+imagineemos que eso da significativo
+
+con argumento disp.formula que corregimos la heterocedasticidad
+
+hay uan forma rapida de detectar esta heterocedasticiddad
+
+> pairs(a_por_b ~ t_sonda + fuente + especie + id, data = datos)
+
+podria ser id el que mete heterocedasticidad porque no varia igual, vamos a modelar la varianza de nuestro modelo.
+
+> pairs(residuals(modtmb) ~ t_sonda + fuente + especie + id, data = datos)
+
+ahora al ver residuos podemos ver tb un poco
+
+Vamosa  modelizar la varianza.
+
+> pairs(residuals(modtmb) ~ t_sonda + fuente + especie + id, data = datos)
+> modtmb.hc <- update(modtmb, dispformula=~id+t_sonda)
+> AICc(modtmb,modtmb.hc)
+          df     AICc
+modtmb    29 579.6846
+
+
+
+
+> pairs(residuals(modtmb) ~ t_sonda + fuente + especie + id, data = datos)
+> modtmb.hc <- update(modtmb, dispformula=~id+t_sonda)
+> AICc(modtmb,modtmb.hc)
+          df     AICc
+modtmb    29 579.6846
+modtmb.hc 55 694.2171
+> summary(modtmb.hc)
+ Family: gaussian  ( identity )
+Formula:          a_por_b ~ t_sonda + fuente * especie + (1 | id)
+Dispersion:               ~id + t_sonda
+Data: datos
+
+     AIC      BIC   logLik deviance df.resid 
+   565.9    711.3   -227.9    455.9       49 
+
+Random effects:
+
+Conditional model:
+ Groups   Name        Variance  Std.Dev. 
+ id       (Intercept) 1.796e-07 0.0004238
+ Residual                    NA        NA
+Number of obs: 104, groups:  id, 26
+
+Conditional model:
+                  Estimate Std. Error z value Pr(>|z|)    
+(Intercept)       10.86170    2.58914   4.195 2.73e-05 ***
+t_sonda            1.04867    0.08298  12.637  < 2e-16 ***
+fuente1           -4.31459    0.30240 -14.268  < 2e-16 ***
+especie1           3.33869    0.38059   8.772  < 2e-16 ***
+especie2           3.97095    0.80270   4.947 7.54e-07 ***
+especie3           0.77451    1.57001   0.493 0.621791    
+especie4           0.45946    0.60353   0.761 0.446488    
+especie5          -1.43388    0.90802  -1.579 0.114306    
+especie6          -1.32822    1.13344  -1.172 0.241257    
+especie7          -1.40766    0.57984  -2.428 0.015196 *  
+especie8           3.68533    2.61925   1.407 0.159422    
+especie9          -1.51528    0.54883  -2.761 0.005763 ** 
+especie10         -3.35251    0.53912  -6.218 5.02e-10 ***
+especie11          0.40945    0.64035   0.639 0.522548    
+especie12         -2.07577    0.56699  -3.661 0.000251 ***
+fuente1:especie1  -0.74140    0.34176  -2.169 0.030054 *  
+fuente1:especie2  -1.42923    0.77232  -1.851 0.064231 .  
+fuente1:especie3   0.16880    1.26202   0.134 0.893599    
+fuente1:especie4   1.68280    0.55789   3.016 0.002558 ** 
+fuente1:especie5  -0.81048    0.81600  -0.993 0.320597    
+fuente1:especie6  -0.20066    1.58942  -0.126 0.899537    
+fuente1:especie7   0.04310    0.56617   0.076 0.939318    
+fuente1:especie8   3.23305    1.41204   2.290 0.022043 *  
+fuente1:especie9  -1.44950    0.56544  -2.563 0.010363 *  
+fuente1:especie10 -0.66194    0.50289  -1.316 0.188083    
+fuente1:especie11 -0.34437    0.60686  -0.567 0.570398    
+fuente1:especie12 -0.56033    0.53817  -1.041 0.297793    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Dispersion model:
+             Estimate Std. Error z value Pr(>|z|)    
+(Intercept)  0.653161   1.112521   0.587 0.557136    
+id1         -1.660428   0.550779  -3.015 0.002572 ** 
+id2          0.375162   0.358270   1.047 0.295031    
+id3         -0.502087   0.502345  -0.999 0.317559    
+id4          1.138228   0.373431   3.048 0.002303 ** 
+id5          0.169315   0.473534   0.358 0.720675    
+id6          0.629257   0.408665   1.540 0.123612    
+id7         -0.893867   0.536904  -1.665 0.095941 .  
+id8          1.326532   0.356360   3.722 0.000197 ***
+id9          0.561801   0.365419   1.537 0.124192    
+id10        -0.370592   0.467613  -0.793 0.428058    
+id11         0.296443   0.449342   0.660 0.509430    
+id12         0.199969   0.468997   0.426 0.669835    
+id13         0.781955   0.358640   2.180 0.029233 *  
+id14        -0.885352   0.489196  -1.810 0.070325 .  
+id15         0.757871   0.503629   1.505 0.132371    
+id16         0.319018   0.617528   0.517 0.605432    
+id17         0.691125   0.371095   1.862 0.062548 .  
+id18        -0.946090   0.517697  -1.827 0.067625 .  
+id19         0.608076   0.356177   1.707 0.087779 .  
+id20        -0.999076   0.510235  -1.958 0.050222 .  
+id21        -0.717418   0.460130  -1.559 0.118958    
+id22         0.176900   0.357661   0.495 0.620880    
+id23         0.385003   0.387325   0.994 0.320220    
+id24        -0.976334   0.527729  -1.850 0.064304 .  
+id25         0.353006   0.377561   0.935 0.349806    
+t_sonda      0.009666   0.035313   0.274 0.784299    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> lrtest(update(modtmb, REML=F),)
+Error en lrtest.default(update(modtmb, REML = F), ): 
+  argumento ausente, sin argumento por omisión
+> lrtest(update(modtmb, REML=F),modtmb.hc)
+Likelihood ratio test
+
+Model 1: a_por_b ~ t_sonda + fuente * especie + (1 | id)
+Model 2: a_por_b ~ t_sonda + fuente * especie + (1 | id)
+  #Df  LogLik Df Chisq Pr(>Chisq)    
+1  29 -275.62                        
+2  55 -227.94 26 95.35  7.522e-10 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> r.squaredGLMM(modtmb,modtmb.hc)
+           R2m       R2c
+[1,] 0.4747659 0.5931434
+> r.squaredGLMM(modtmb.hc)
+     R2m R2c
+[1,]  NA  NA
+Aviso:
+In r.squaredGLMM.glmmTMB(modtmb.hc) :
+  effects of dispersion model are ignored
+> r.squaredGLMM(modtmb.hc$fit)
+Error en UseMethod("r.squaredGLMM"): 
+  no applicable method for 'r.squaredGLMM' applied to an object of class "list"
+> r2_efron(modtmb)
+[1] 0.6618102
+> r2_efron(modtmb.hc)
+[1] 0.4211292
+
+
+el corregido por heterocedasticidad es mucho peor.
+modtmb.hc 55 694.2171
