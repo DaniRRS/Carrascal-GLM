@@ -12,3 +12,112 @@ knitr::opts_chunk$set(echo = TRUE)
 ## glmmTMB
 
 En modelos mixtos hay un problemas si los valores son altos los predictores son muy pequeños y a veces peta por eso es mejor trabajar con scale, que asi computacionalmente es mas eficiente y estable y no petan.
+
+Claramente no es un normal la distribucion
+
+> qqnorm(datos$entradas10h)
+> qqline(datos$entradas10h)
+
+ni con histograma
+
+binomial negativa, poisson numeros enteros
+
+vamosa a explorar en caso deque no sepa distribucino de mi respuesta
+
+tmb.1.p <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo), REML=FALSE, data=datos, control=control.tmb, family=poisson(link="log"))
+
+REML = F si no es normal cro que siempre
+
+la compois se usa cuando la varianza es mucho menor que la media pero es un caso extraño
+la binom negativa hay dos tipos (uno nuevo en lnueva version glmmTMB)
+
+nbinom1 modeliza la varianza como la media + la media en
+nbinom2 modeliza la varianza como la media +media al cuadrado entre size
+
+Si tengo muchos 0 puedo hacer dos cosas
+
+hurdle - asume que lo que ocurre en un proceso tiene dos partes una que afecta a la emergencia de 0 o su aparicion sobre estados no 0 (como si hiciera una binomial) y otra parte que explora los conteos qeu no son 0.
+
+otro modelo mas complejo asume dos cosas uno que asume 0 asociado a la binomial y otro que hace los conteos pero que pueden aparcer 0 tambien.  y esto son los zero inflated
+
+En principio exploro si tengo dudas con ziformula = ~. pero luego puedo probar a poner solo unas predictoras y no otras  o quitar el random o lo que sea.
+
+si uso zi~.1
+
+o lo que sea
+
+tmb.1.p.z <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo), ziformula=~., REML=FALSE, data=datos, control=control.tmb, family=poisson(link="log"))
+tmb.1.pg.z <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo), ziformula=~., REML=FALSE, data=datos, control=control.tmb, family=genpois(link="log"))
+tmb.1.nb1.z <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo), ziformula=~., REML=FALSE, data=datos, control=control.tmb, family=nbinom1(link="log"))
+tmb.1.nb2.z <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo), ziformula=~., REML=FALSE, data=datos, control=control.tmb, family=nbinom2(link="log"))
+tmb.1.tw.z <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo), ziformula=~., REML=FALSE, data=datos, control=control.tmb, family=tweedie(link="log"))
+tmb.1.p.h <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo), ziformula=~., REML=FALSE, data=datos, control=control.tmb, family=truncated_poisson(link="log"))
+tmb.1.pg.h <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo), ziformula=~., REML=FALSE, data=datos, control=control.tmb, family=truncated_genpois(link="log"))
+tmb.1.nb1.h <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo), ziformula=~., REML=FALSE, data=datos, control=control.tmb, family=truncated_nbinom1(link="log"))
+tmb.1.nb2.h <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo), ziformula=~., REML=FALSE, data=datos, control=control.tmb, family=truncated_nbinom2(link="log"))
+
+LA CLAVE ES MANTENER TODO IGUAL Y SOLO VARIAR LA FAMILY
+
+
+> valores_AICc
+            df     AICc
+tmb.1.p     13 783.3336
+tmb.1.pg    14 780.8444
+tmb.1.nb1   14 781.0801
+tmb.1.nb2   14 779.9814
+tmb.1.tw    15       NA
+tmb.1.p.z   26       NA
+tmb.1.pg.z  27       NA
+tmb.1.nb1.z 27       NA
+tmb.1.nb2.z 27       NA
+tmb.1.tw.z  28       NA
+tmb.1.p.h   26 796.9070
+tmb.1.pg.h  27 791.6490
+tmb.1.nb1.h 27       NA
+tmb.1.nb2.h 27 792.6280
+> Weights(na.omit(valores_AICc))
+ model weights 
+[1] 0.077 0.269 0.239 0.413 0.000 0.001 0.001
+
+
+esta claro que ni hurdle ni zi
+
+y vemos que 0.413/0.077 es solo 5 veces mejor pruebo ambas miro rs y decido
+
+> tmb.1.gg <- update(tmb.1.p,family= gaussian(link="identity"))
+> AICc(tmb.1.gg,tmb.1.nb2)
+          df      AICc
+tmb.1.gg  14 1040.4472
+tmb.1.nb2 14  779.9814
+
+indicativo de que no es una normal ni de coña
+
+Gamma definida por dos parametros shape y scale, NO ADMITE 0 se puede asociar a nbinom
+
+mediante scale y shpae podemos calcular media y varianza
+
+Tiene decimales y no tiene 0 ejemplos: la altura de un ave volando, porque un ave y esta volando no puede estar psada, o la profundida a la que excava ael topo .
+
+Si parametrizada parece una gaussian tiene decimales y no hay 0 nada de hacer log parametrizamos como gamma y a cascarla
+
+binomial negativa es una poisson sobre dispersada la media vale menos que la varianza
+
+Tweedie definida por 3 parametros mu pho y power se puede asociar  continuos y conteos
+
+UNA vez identifico la distribucion de la variable respuesta me pongo a jugar con distintos modelos con la parte aleatoria.
+
+
+mix.0 <- glmmTMB(entradas10h ~ 1 + (1|individuo), REML=FALSE, data=datos, control=control.tmb, family=nbinom2(link="log"))
+mix.1 <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo), REML=FALSE, data=datos, control=control.tmb, family=nbinom2(link="log"))
+
+en mix.1 meto ya los efectos fijos
+
+mix.4 <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo) + (-1+temperatura2+ln_luz2+distancia|individuo), REML=FALSE, data=datos, control=control.tmb, family=nbinom2(link="log"))
+
+este no pongo la pendiente le meto un -1
+
+mix.5 <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo) + (-1+temperatura2|individuo) + (-1+ln_luz2|individuo) + (-1+distancia|individuo), REML=FALSE, data=datos, control=control.tmb, family=nbinom2(link="log"))
+
+
+quito las pendientes en cada efecto random y combino con unos interceptos que depende de los individiuos 1|ind
+
