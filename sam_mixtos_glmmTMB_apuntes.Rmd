@@ -258,3 +258,12 @@ esto es en log y es un truño mejor los otros para interpretar
 AUTOCORRELACION
 
 Con DHARMa podemos ver estas correlaciones espaciales y temporales. 
+
+
+La autocorrelacion dura hasta el dia 34, 
+
+testTemporalAutocorrelation(simulateResiduals(modelo), time=datos$fecha2)   
+
+modelo.temporal2 <- update(modelo, .~.+ou(tiempo+0|LOCATION))      ## efecto temporal dentro de cada nivel del factor aleatorio  MUY LENTO!!!
+
+El modelo del tiempo cambia en relacion de la localizacion el efecto del tiempo puede cambiar en los distintos factores del nivel random
