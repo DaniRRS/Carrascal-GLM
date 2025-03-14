@@ -121,3 +121,140 @@ mix.5 <- glmmTMB(entradas10h ~ temperatura2+ln_luz2+distancia*spp + (1|individuo
 
 quito las pendientes en cada efecto random y combino con unos interceptos que depende de los individiuos 1|ind
 
+Usamos teoria de la informacion
+
+> mixtos_AICc <- AICc(mix.0, mix.1, mix.2, mix.3, mix.4, mix.5)
+> mixtos_AICc
+      df     AICc
+mix.0  3 846.7890
+mix.1 14 779.9814
+mix.2 22       NA
+mix.3 23       NA
+mix.4 24       NA
+mix.5 19       NA
+> Weights(na.omit(mixtos_AICc))
+ model weights 
+[1] 0 1
+
+plot_model(modelo, show.data=TRUE, type="resid", ci.lvl=0.95, terms=NULL)
+
+con este plot peudo ver si hay heterocedasticidad, proque como esto son los residuos puedo comprobar si entre los niveles de las 5 especies que hay si hay diferencias de las variancza 
+
+checkoverdispersed solo para distribucines de un salo parmetro es decir poisson y binomial negativa
+
+
+> Anova(modelo, type=3)
+Analysis of Deviance Table (Type III Wald chisquare tests)
+
+Response: entradas10h
+                Chisq Df Pr(>Chisq)    
+(Intercept)   51.0256  1  9.117e-13 ***
+temperatura2   9.0225  1  0.0026668 ** 
+ln_luz2        2.4725  1  0.1158532    
+distancia     39.0755  1  4.077e-10 ***
+spp           18.4839  4  0.0009923 ***
+distancia:spp 21.6763  4  0.0002325 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Vemos con Anova los grados de libertad que consume cada factor
+
+> 30^(1/2*4)
+[1] 900
+> 30^(1/8)
+[1] 1.529819
+
+inflado de errrr
+
+En diseños no balanceados pueden emerger relaciones entre dos factores y que esta relación sea falsa
+
+Interacciones dobles
+
+CAda una de las interacciones dobles se va a controlar por la otras interacciones dobles
+
+En diseños complejos y no balanceados aconseja type 2 en Anova
+
+drop1(update(modelo, .~.-distancia:spp), test="Chisq")    ## *** poned aqui vuestros datos ***
+
+compara devianzas
+
+> drop1(update(modelo, .~.-distancia:spp), test="Chisq")    ## *** poned aqui vuestros datos ***
+Single term deletions
+
+Model:
+entradas10h ~ temperatura2 + ln_luz2 + distancia + spp + (1 | 
+    individuo)
+             Df    AIC    LRT  Pr(>Chi)    
+<none>          796.40                     
+temperatura2  1 802.94  8.548  0.003459 ** 
+ln_luz2       1 796.70  2.305  0.128999    
+distancia     1 834.06 39.666 3.014e-10 ***
+spp           4 802.57 14.179  0.006746 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+El AICc cuando no quito nada (coincide con el AIC del modelo), vemos los aICC de quitar al modelo cada uno de esas variables.
+
+Eldrop es mejor que otros pero si tengo VIF altos salen consas raras como lo de quitar la luz en este caso 
+
+Vamos a ver que pasa con la parte aleatoria y sin ella
+
+
+> modelo.nomixto <- update(modelo, .~.-(1|individuo), REML=F)  ## *** PONED AQUI VUESTRA PARTE ALEATORIA A ELIMINAR ***
+> lrtest(modelo.nomixto, modelo)
+Likelihood ratio test
+
+Model 1: entradas10h ~ temperatura2 + ln_luz2 + distancia + spp + distancia:spp
+Model 2: entradas10h ~ temperatura2 + ln_luz2 + distancia * spp + (1 | 
+    individuo)
+  #Df  LogLik Df Chisq Pr(>Chisq)
+1  13 -375.42                    
+2  14 -375.42  1     0     0.9998
+
+Vemos que implica el efecto aleatorio 1|individuo, diferencia entre los individuos, me da nada significativo, significa uqe no hay diferencia en los individuos al meter todo lo que tenemos el modelo, todos los individuos se comportan igual. Entonces puedo quitar el efecto random
+
+> r2_efron(modelo)     ## similar a lo anterior
+[1] 0.1939379
+
+VAMOSA A IJTERPRETAR COEF
+
+> summary(modelo)$coefficients
+$cond
+                   Estimate Std. Error    z value     Pr(>|z|)
+(Intercept)     -0.87963550  0.1231428 -7.1432173 9.117134e-13
+temperatura2     0.49403211  0.1644723  3.0037406 2.666826e-03
+ln_luz2         -0.26308339  0.1673112 -1.5724199 1.158532e-01
+distancia1       0.76665944  0.1226451  6.2510395 4.077298e-10
+spp1             0.52326584  0.1886174  2.7742181 5.533457e-03
+spp2            -0.28904881  0.3124177 -0.9252000 3.548619e-01
+spp3            -0.35238534  0.2037246 -1.7297138 8.368142e-02
+spp4            -0.36977884  0.3102313 -1.1919456 2.332826e-01
+distancia1:spp1 -0.16461411  0.1886132 -0.8727602 3.827938e-01
+distancia1:spp2  0.44255055  0.3124154  1.4165453 1.566159e-01
+distancia1:spp3 -0.08366382  0.2037142 -0.4106922 6.812982e-01
+distancia1:spp4  0.54443900  0.3102335  1.7549332 7.927074e-02
+
+$zi
+NULL
+
+$disp
+NULL
+
+> exp(0.77)
+[1] 2.159766
+
+Cuando estan cerca entran 2.15 veces mas hacemos el antilog del coeficiente 
+
+Cuando la temperatura varia una cantidad de una desviacion tipica entran exp(0.49) mas veces
+
+En todos los modelos que usemos menos el gaussaina como usan link log se aplica el antilog para interpretar el cambio de la respuesta en funcion de la unidad de cambio de las predictoreas
+
+El PM entra en los comedores el 69% en relacion al 100% del Sitta europaeus. El PM entra un 30% menos.
+
+plot(allEffects(modelo), rotx=45, type="link")
+esto es en log y es un truño mejor los otros para interpretar
+
+
+AUTOCORRELACION
+
+Con DHARMa podemos ver estas correlaciones espaciales y temporales. 
